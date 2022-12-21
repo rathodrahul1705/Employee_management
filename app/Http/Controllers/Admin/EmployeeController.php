@@ -155,7 +155,7 @@ class EmployeeController extends Controller
     {
 
           $scriptUrl = "https://script.google.com/macros/s/AKfycbxN5Lrghl1XX2nDzpAFIXqDuem6vo6AmChaddw_cXD4FcSd1YIQTXnmsJfzYMKS4xNt/exec";
-          $limit  = 10; 
+          $limit  = 20; 
           $offset = 0; 
 
           $data = array(
@@ -170,6 +170,7 @@ class EmployeeController extends Controller
           curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
           $result = curl_exec($ch);
           $result = json_decode($result, true);
+          // dd($result);
           $finalMailArray =[];
           if($result['status'] == 'success'){
             foreach($result['data'] as $inbox){
