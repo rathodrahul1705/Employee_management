@@ -41,8 +41,8 @@
                         @include('messages.alerts')
                         <div class="row mb-3">
                             <div class="col text-center mx-auto">
-                                <img src="/storage/employee_photos/{{ $employee->photo }}" class="rounded-circle img-fluid" alt=""
-                                style="box-shadow: 2px 4px rgba(0,0,0,0.1)"
+                                <img src="/img/{{ $employee->photo }}" class="rounded-circle img-fluid" alt=""
+                                style="box-shadow: 2px 4px rgba(0,0,0,0.1);width: 100px;height: 100px;"
                                 >
                             </div>
                         </div>

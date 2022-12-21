@@ -68,16 +68,11 @@ class EmployeeController extends Controller
         ];
         // Photo upload
         if ($request->hasFile('photo')) {
-            $filename_ext = $request->file('photo')->getClientOriginalName();
-            $filename = pathinfo($filename_ext, PATHINFO_FILENAME);
-            $ext = $request->file('photo')->getClientOriginalExtension();
-            $filename_store = $filename.'_'.time().'.'.$ext;
+            $fileName = 'profile' . time() . '.' . $request->file('photo')->extension();
+            $result = $request->file('photo')->move(public_path('img'), $fileName);
+            $filepath = $fileName;
+            $employeeDetails['photo'] = $filepath;
 
-            $image = $request->file('photo');
-            $image_resize = Image::make($image->getRealPath());              
-            $image_resize->resize(300, 300);
-            $image_resize->save(public_path(DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'employee_photos'.DIRECTORY_SEPARATOR.$filename_store));
-            $employeeDetails['photo'] = $filename_store;
         }
         
         Employee::create($employeeDetails);
@@ -98,6 +93,7 @@ class EmployeeController extends Controller
 
     public function employeeProfile($employee_id) {
         $employee = Employee::findOrFail($employee_id);
+        // dd($employee);
         return view('admin.employees.profile')->with('employee', $employee);
     }
 
@@ -133,15 +129,10 @@ class EmployeeController extends Controller
         ];
         // Photo upload
         if ($request->hasFile('photo')) {
-            $filename_ext = $request->file('photo')->getClientOriginalName();
-            $filename = pathinfo($filename_ext, PATHINFO_FILENAME);
-            $ext = $request->file('photo')->getClientOriginalExtension();
-            $filename_store = $filename.'_'.time().'.'.$ext;
-            $image = $request->file('photo');
-            $image_resize = Image::make($image->getRealPath());              
-            $image_resize->resize(300, 300);
-            $image_resize->save(public_path(DIRECTORY_SEPARATOR.'storage'.DIRECTORY_SEPARATOR.'employee_photos'.DIRECTORY_SEPARATOR.$filename_store));
-            $employeeDetails['photo'] = $filename_store;
+            $fileName = 'profile' . time() . '.' . $request->file('photo')->extension();
+            $result = $request->file('photo')->move(public_path('img'), $fileName);
+            $filepath = $fileName;
+            $employeeDetails['photo'] = $filepath;
         }
         Employee::find($employee_id)->update($employeeDetails);        
         $request->session()->flash('success', 'Employee has been successfully updated');
@@ -162,42 +153,51 @@ class EmployeeController extends Controller
 
     public function mail()
     {
-        set_time_limit(3000); 
 
-        /* connect to gmail with your credentials */
-        $hostname = '{imap.gmail.com:993/ssl/imap/notls}INBOX';
-        $username = 'sd9@consultlane.com'; 
-        $password = 'Behonest123@';
+          $scriptUrl = "https://script.google.com/macros/s/AKfycbxN5Lrghl1XX2nDzpAFIXqDuem6vo6AmChaddw_cXD4FcSd1YIQTXnmsJfzYMKS4xNt/exec";
+          $limit  = 10; 
+          $offset = 0; 
 
-        /* try to connect */
-        $inbox = imap_open($hostname,$username,$password) or die('Cannot connect to Gmail: ' . imap_last_error());
-        // $read = imap_search($inbox, 'ALL');
-        $read = imap_search($inbox, 'FROM "sd9@consultlane.com"');
+          $data = array(
+             "action" => "inboxList",
+             "limit"  => $limit,
+             "offset" => $offset
+          );
 
-        if($read) {
-            rsort($read);
-            foreach($read as $email_number) 
-            {
-                $overview = imap_fetch_overview($inbox,$email_number,0);
-                $mailbody = imap_fetchbody($inbox,$email_number,2);
-                $structure = imap_fetchstructure($inbox, $email_number);
-                if(isset($structure->parts) && count($structure->parts)) 
-                {
-                    for($i = 0; $i < count($structure->parts); $i++) 
-                    {
-                        if($overview[$i]->subject == "Employee Details")
-                        {
-                            print_r($mailbody);exit;
-                            $attachments[$i] = array(
-                            'mailbody' => false,
-                            );
-                        }
-
-                    }
-                }
-
+          $ch = curl_init($scriptUrl);
+          curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+          curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+          curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+          $result = curl_exec($ch);
+          $result = json_decode($result, true);
+          $finalMailArray =[];
+          if($result['status'] == 'success'){
+            foreach($result['data'] as $inbox){
+                 if($inbox['subject'] == "Employee Details")
+                 {
+                    $finalMailArray[] = $inbox;
+                 }
             }
-        } 
-        imap_close($inbox);
+
+          }
+          return view('admin.mail.index',compact('finalMailArray'));
+    }
+
+    public function mailbody(Request $request,$id)
+    {
+        $scriptUrl = "https://script.google.com/macros/s/AKfycbxN5Lrghl1XX2nDzpAFIXqDuem6vo6AmChaddw_cXD4FcSd1YIQTXnmsJfzYMKS4xNt/exec";
+        $data = array(
+        "action" => "inboxRead",
+        "id"  => $id,
+        );
+
+        $ch = curl_init($scriptUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
+        $result = curl_exec($ch);
+        $result = json_decode($result, true);
+        $data = $result['data'];
+        return view('admin.mail.mailbody',compact('data'));
     }
 }

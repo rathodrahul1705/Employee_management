@@ -41,6 +41,7 @@ Route::namespace('Admin')->prefix('admin')->name('admin.')->middleware(['auth','
     Route::POST('/employees/file_import', 'EmployeeController@fileInport')->name('employees.file_import');
     Route::get('/employees/file_export', 'EmployeeController@fileExport')->name('employees.file_export');
     Route::get('/employees/mail', 'EmployeeController@mail')->name('employees.mail');
+    Route::get('/mail/mailbody/{id}', 'EmployeeController@mailbody')->name('mail.mailbody');
 
     // Routes for employees //
 });
